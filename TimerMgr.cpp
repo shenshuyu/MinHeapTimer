@@ -33,6 +33,19 @@ void MyTimer::on_timer(unsigned long long now)
     m_timerfunc();
 }
 
+
+TimerManager::TimerManager()
+:shutdown_(false)
+{
+    detectTh_ = std::thread(&TimerManager::detect_timers, this);
+}
+
+TimerManager::~TimerManager()
+{
+    shutdown_ = true;
+    if (detectTh_.joinable()) {detectTh_.join();}
+}
+
 // TimerManager
 void TimerManager::add_timer(MyTimer* timer)
 {
@@ -67,13 +80,19 @@ void TimerManager::remove_timer(MyTimer* timer)
 
 void TimerManager::detect_timers()
 {
-    unsigned long long now = get_current_millisecs();
+    auto detectheap = [this]() {
+        unsigned long long now = get_current_millisecs();
 
-    while (!heap_.empty() && heap_[0].time <= now) {
-        MyTimer* timer = heap_[0].timer;
-        remove_timer(timer);
-        timer->on_timer(now);
-    }
+        while (!heap_.empty() && heap_[0].time <= now) {
+            MyTimer* timer = heap_[0].timer;
+            remove_timer(timer);
+            timer->on_timer(now);
+        }
+    };
+    while (!shutdown_) {
+        this_thread::sleep_for(chrono::microseconds(200));
+        detectheap();
+    }    
 }
 
 void TimerManager::up_heap(size_t index)

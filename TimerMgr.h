@@ -2,7 +2,9 @@
 #define	timer_mgr_h
 #include <iostream>
 #include <functional>
-#include <vector>
+#include <vector>
+#include <thread>
+
 using namespace std;
 
 class TimerManager;
@@ -39,6 +41,8 @@ private:
 class TimerManager
 {
 public:
+    TimerManager();
+    ~TimerManager();
     //获取当前毫秒数
     static unsigned long long get_current_millisecs();
     //探测执行
@@ -61,6 +65,8 @@ private:
         unsigned long long time;
         MyTimer* timer;
     };
+    std::thread     detectTh_;
+    bool            shutdown_;
     std::vector<HeapEntry> heap_;
 };
 
